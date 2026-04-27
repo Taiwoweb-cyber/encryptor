@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CryptoVault WebApp</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+  body {
+    margin: 0;
+    font-family: Inter, sans-serif;
+    background: #f5f7fb;
+    color: #111;
+  }
+
+  .topbar {
+    background: #0f172a;
+    color: white;
+    padding: 16px 24px;
+    font-weight: 600;
+    font-size: 18px;
+  }
+
+  .container {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 220px;
+    background: white;
+    border-right: 1px solid #e5e7eb;
+    padding: 20px;
+  }
+
+  .sidebar h3 {
+    font-size: 14px;
+    margin-bottom: 10px;
+    color: #64748b;
+  }
+
+  .sidebar button {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 8px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #f1f5f9;
+    text-align: left;
+  }
+
+  .sidebar button:hover {
+    background: #e2e8f0;
+  }
+
+  .main {
+    flex: 1;
+    padding: 24px;
+  }
+
+  .card {
+    background: white;
+    padding: 20px;
+    border-radius: 14px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+  }
+
+  input, textarea, select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    margin-bottom: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-family: Inter;
+  }
+
+  button.primary {
+    background: #f97316;
+    color: white;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  button.primary:hover {
+    background: #ea580c;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .hidden { display: none; }
+
+  .auth-box {
+    max-width: 400px;
+    margin: 80px auto;
+  }
+
+  .tag {
+    font-size: 12px;
+    color: #64748b;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+  CryptoVault 🔐 Secure Encryption Platform
+</div>
+
+<!-- AUTH -->
+<div id="auth" class="auth-box">
+  <div class="card">
+    <h2 id="authTitle">Login</h2>
+
+    <input id="email" placeholder="Email"/>
+    <input id="password" type="password" placeholder="Password"/>
+
+    <button class="primary" onclick="handleAuth()">Continue</button>
+
+    <p class="tag" onclick="toggleAuth()" style="cursor:pointer;">
+      Switch to Signup/Login
+    </p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="container hidden">
+
+  <div class="sidebar">
+    <h3>TOOLS</h3>
+    <button onclick="showTab('encrypt')">Encryption</button>
+    <button onclick="showTab('decrypt')">Decryption</button>
+    <button onclick="showTab('hash')">Hashing</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <div class="main">
+
+    <!-- ENCRYPT -->
+    <div id="encrypt" class="card">
+      <h2>Encrypt Data</h2>
+
+      <select id="encAlgo">
+        <option>AES-GCM (Recommended)</option>
+        <option>RSA-OAEP</option>
+      </select>
+
+      <textarea id="encText" placeholder="Enter text to encrypt"></textarea>
+
+      <button class="primary" onclick="encryptData()">Encrypt</button>
+
+      <p><b>Output:</b></p>
+      <textarea id="encOutput"></textarea>
+    </div>
+
+    <!-- DECRYPT -->
+    <div id="decrypt" class="card hidden">
+      <h2>Decrypt Data</h2>
+
+      <select id="decAlgo">
+        <option>AES-GCM</option>
+        <option>RSA-OAEP</option>
+      </select>
+
+      <textarea id="decText" placeholder="Paste encrypted text"></textarea>
+
+      <button class="primary" onclick="decryptData()">Decrypt</button>
+
+      <p><b>Output:</b></p>
+      <textarea id="decOutput"></textarea>
+    </div>
+
+    <!-- HASH -->
+    <div id="hash" class="card hidden">
+      <h2>Hashing (SHA-256)</h2>
+
+      <textarea id="hashText" placeholder="Enter text"></textarea>
+
+      <button class="primary" onclick="hashData()">Generate Hash</button>
+
+      <p><b>Output:</b></p>
+      <textarea id="hashOutput"></textarea>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let isSignup = false;
+
+function toggleAuth() {
+  isSignup = !isSignup;
+  document.getElementById("authTitle").innerText = isSignup ? "Signup" : "Login";
+}
+
+function handleAuth() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  if (!email || !password) return alert("Fill all fields");
+
+  let users = JSON.parse(localStorage.getItem("users") || "{}");
+
+  if (isSignup) {
+    users[email] = { password, key: crypto.randomUUID() };
+    localStorage.setItem("users", JSON.stringify(users));
+    alert("Account created!");
+  } else {
+    if (!users[email] || users[email].password !== password) {
+      return alert("Invalid login");
+    }
+    localStorage.setItem("currentUser", email);
+    loginSuccess();
+  }
+}
+
+function loginSuccess() {
+  document.getElementById("auth").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+}
+
+function logout() {
+  localStorage.removeItem("currentUser");
+  location.reload();
+}
+
+function showTab(tab) {
+  ["encrypt","decrypt","hash"].forEach(id => {
+    document.getElementById(id).classList.add("hidden");
+  });
+  document.getElementById(tab).classList.remove("hidden");
+}
+
+/* ---------------- AES ---------------- */
+async function aesEncrypt(text, key) {
+  const enc = new TextEncoder();
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(key.padEnd(32, "0")),
+    "AES-GCM",
+    false,
+    ["encrypt"]
+  );
+
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+
+  const encrypted = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    cryptoKey,
+    enc.encode(text)
+  );
+
+  return btoa(String.fromCharCode(...new Uint8Array(iv))) + "." +
+         btoa(String.fromCharCode(...new Uint8Array(encrypted)));
+}
+
+/* ---------------- HASH ---------------- */
+async function hashData() {
+  const text = document.getElementById("hashText").value;
+  const enc = new TextEncoder();
+  const hash = await crypto.subtle.digest("SHA-256", enc.encode(text));
+  document.getElementById("hashOutput").value =
+    [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2,"0")).join("");
+}
+
+/* SIMPLE AES ONLY DEMO ENCRYPT */
+async function encryptData() {
+  const text = document.getElementById("encText").value;
+  const email = localStorage.getItem("currentUser");
+  const users = JSON.parse(localStorage.getItem("users"));
+  const key = users[email].key;
+
+  const result = await aesEncrypt(text, key);
+  document.getElementById("encOutput").value = result;
+}
+
+function decryptData() {
+  alert("Decryption demo requires backend-safe key handling (can be extended).");
+}
+
+/* AUTO LOGIN */
+if (localStorage.getItem("currentUser")) loginSuccess();
+
+</script>
+
+</body>
+</html>

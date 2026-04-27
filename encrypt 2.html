@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encrypt Online</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: #f8f9fa;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        input[type="text"], input[type="password"], select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 16px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background-color: #0069d9;
+        }
+        .btn-secondary {
+            background-color: #f8f9fa;
+            color: #007bff;
+            border: 1px solid #007bff;
+        }
+        .btn-secondary:hover {
+            background-color: #e2e6ea;
+        }
+        .result {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            word-wrap: break-word;
+        }
+        #login-form, #encryption-form, #hashing-form {
+            display: none;
+        }
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="login-form">
+            <h1>Encrypt Online</h1>
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Enter username">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter password">
+            <div class="btn-group">
+                <button class="btn-primary" onclick="login()">Login</button>
+                <button class="btn-secondary" onclick="signup()">Signup</button>
+            </div>
+        </div>
+
+        <div id="encryption-form">
+            <h1>Encrypt Online</h1>
+            <button class="btn-block btn-secondary" onclick="logOut()" style="margin-bottom: 15px;">Logout</button>
+            <label for="text">Text to encrypt/decrypt</label>
+            <input type="text" id="text" placeholder="Enter text">
+            <label for="secretKey">Secret Key</label>
+            <input type="password" id="secretKey" placeholder="Enter secret key">
+            <label for="algorithm">Select Algorithm</label>
+            <select id="algorithm">
+                <option value="aes-256">AES-256 (High Strength)</option>
+                <option value="aes-192">AES-192 (Medium Strength)</option>
+                <option value="aes-128">AES-128 (Low Strength)</option>
+            </select>
+            <div class="btn-group">
+                <button class="btn-primary" onclick="encrypt()">Encrypt</button>
+                <button class="btn-secondary" onclick="decrypt()">Decrypt</button>
+            </div>
+            <div class="result" id="encryption-result"></div>
+            <button class="btn-block btn-secondary" onclick="showHashing()" style="margin-top: 15px;">Go to Hashing</button>
+        </div>
+
+        <div id="hashing-form">
+            <h1>Encrypt Online</h1>
+            <button class="btn-block btn-secondary" onclick="logOut()" style="margin-bottom: 15px;">Logout</button>
+            <label for="hashText">Text to hash</label>
+            <input type="text" id="hashText" placeholder="Enter text">
+            <label for="hashAlgorithm">Select Hashing Algorithm</label>
+            <select id="hashAlgorithm">
+                <option value="SHA-256">SHA-256</option>
+                <option value="SHA-1">SHA-1</option>
+                <option value="MD5">MD5</option>
+            </select>
+            <button class="btn-primary btn-block" onclick="hash()">Hash</button>
+            <div class="result" id="hash-result"></div>
+            <button class="btn-block btn-secondary" onclick="showEncryption()" style="margin-top: 15px;">Go to Encryption</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script>
+        const API_KEY = "put api key here";
+
+        // Show login form initially
+        document.getElementById('login-form').style.display = 'block';
+
+        function login() {
+            // Add login logic here
+            alert('Logged in successfully!');
+            showEncryption();
+        }
+
+        function signup() {
+            // Add signup logic here
+            alert('Signed up successfully!');
+            showEncryption();
+        }
+
+        function logOut() {
+            // Clear secret key from storage on logout
+            localStorage.removeItem('secretKey');
+            document.getElementById('encryption-form').style.display = 'none';
+            document.getElementById('hashing-form').style.display = 'none';
+            document.getElementById('login-form').style.display = 'block';
+        }
+
+        function showEncryption() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('hashing-form').style.display = 'none';
+            document.getElementById('encryption-form').style.display = 'block';
+            // Pre-fill secret key if it's stored
+            const storedKey = localStorage.getItem('secretKey');
+            if (storedKey) {
+                document.getElementById('secretKey').value = storedKey;
+            }
+        }
+
+        function showHashing() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('encryption-form').style.display = 'none';
+            document.getElementById('hashing-form').style.display = 'block';
+        }
+
+        function encrypt() {
+            const text = document.getElementById('text').value;
+            const secretKey = document.getElementById('secretKey').value;
+            const algorithm = document.getElementById('algorithm').value;
+            let encryptedText = '';
+
+            // Store secret key for the current user session
+            localStorage.setItem('secretKey', secretKey);
+
+            if (algorithm === 'aes-256') {
+                encryptedText = CryptoJS.AES.encrypt(text, secretKey).toString();
+            } else if (algorithm === 'aes-192') {
+                // AES-192 implementation (using the same library, just specifying key size)
+                const key = CryptoJS.enc.Utf8.parse(CryptoJS.SHA256(secretKey).toString(CryptoJS.enc.Hex).substr(0, 48));
+                encryptedText = CryptoJS.AES.encrypt(text, key, { mode: CryptoJS.mode.ECB }).toString();
+            } else if (algorithm === 'aes-128') {
+                // AES-128 implementation (using the same library, just specifying key size)
+                const key = CryptoJS.enc.Utf8.parse(CryptoJS.SHA256(secretKey).toString(CryptoJS.enc.Hex).substr(0, 32));
+                encryptedText = CryptoJS.AES.encrypt(text, key, { mode: CryptoJS.mode.ECB }).toString();
+            }
+
+            document.getElementById('encryption-result').innerHTML = '<strong>Encrypted:</strong> ' + encryptedText;
+        }
+
+        function decrypt() {
+            const text = document.getElementById('text').value;
+            const secretKey = document.getElementById('secretKey').value;
+            const algorithm = document.getElementById('algorithm').value;
+            let decryptedText = '';
+
+            if (algorithm === 'aes-256') {
+                decryptedText = CryptoJS.AES.decrypt(text, secretKey).toString(CryptoJS.enc.Utf8);
+            } else if (algorithm === 'aes-192') {
+                // AES-192 decryption implementation
+                const key = CryptoJS.enc.Utf8.parse(CryptoJS.SHA256(secretKey).toString(CryptoJS.enc.Hex).substr(0, 48));
+                decryptedText = CryptoJS.AES.decrypt(text, key, { mode: CryptoJS.mode.ECB }).toString(CryptoJS.enc.Utf8);
+            } else if (algorithm === 'aes-128') {
+                // AES-128 decryption implementation
+                const key = CryptoJS.enc.Utf8.parse(CryptoJS.SHA256(secretKey).toString(CryptoJS.enc.Hex).substr(0, 32));
+                decryptedText = CryptoJS.AES.decrypt(text, key, { mode: CryptoJS.mode.ECB }).toString(CryptoJS.enc.Utf8);
+            }
+
+            document.getElementById('encryption-result').innerHTML = '<strong>Decrypted:</strong> ' + decryptedText;
+        }
+
+        function hash() {
+            const text = document.getElementById('hashText').value;
+            const algorithm = document.getElementById('hashAlgorithm').value;
+            let hashedText = '';
+
+            if (algorithm === 'SHA-256') {
+                hashedText = CryptoJS.SHA256(text).toString();
+            } else if (algorithm === 'SHA-1') {
+                hashedText = CryptoJS.SHA1(text).toString();
+            } else if (algorithm === 'MD5') {
+                hashedText = CryptoJS.MD5(text).toString();
+            }
+
+            document.getElementById('hash-result').innerHTML = '<strong>Hashed:</strong> ' + hashedText;
+        }
+    </script>
+</body>
+</html>
